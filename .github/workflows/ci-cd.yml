@@ -4,14 +4,14 @@ on:
   push:
     branches: [ main, develop ]
     paths:
-      - 'RepositoryMigration/**'
-      - 'RepositoryMigration.Tests/**'
+      - 'repomigration/**'
+      - 'repomigration.tests/**'
       - '.github/workflows/**'
   pull_request:
     branches: [ main ]
     paths:
-      - 'RepositoryMigration/**'
-      - 'RepositoryMigration.Tests/**'
+      - 'repomigration/**'
+      - 'repomigration.tests/**'
   workflow_dispatch:
     inputs:
       run_migration:
@@ -27,9 +27,9 @@ on:
 
 env:
   DOTNET_VERSION: '8.0.x'
-  PROJECT_PATH: './RepositoryMigration'
-  TEST_PROJECT_PATH: './RepositoryMigration.Tests'
-  SOLUTION_PATH: './RepositoryMigration.sln'
+  PROJECT_PATH: './repomigration'
+  TEST_PROJECT_PATH: './repomigration.Tests'
+  SOLUTION_PATH: './repomigration.sln'
 
 jobs:
   # Job 1: Build and Test

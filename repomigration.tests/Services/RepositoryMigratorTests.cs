@@ -112,8 +112,8 @@ namespace RepositoryMigration.Tests.Services
             {
                 Repositories = new List<RepositoryInfo>
                 {
-                    new RepositoryInfo { SourceUrl = "url1", DestinationUrl = "dest1" },
-                    new RepositoryInfo { SourceUrl = "url2", DestinationUrl = "dest2" }
+                    new RepositoryInfo { SourceUrl = "https://dev.azure.com/org/project/_git/test-repo1", DestinationUrl = "https://github.com/org/test-repo1.git" },
+                    new RepositoryInfo { SourceUrl = "https://dev.azure.com/org/project/_git/test-repo2", DestinationUrl = "https://github.com/org/test-repo2.git" }
                 }
             };
 

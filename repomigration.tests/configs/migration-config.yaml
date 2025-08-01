@@ -1,0 +1,11 @@
+repositories:
+  - sourceUrl: https://dev.azure.com/organization/project/_git/repository1
+    destinationUrl: https://github.com/organization/repository1.git
+    commitMessage: "Migration from ADO to GitHub - Repository 1"
+    workingDirectory: "./temp/repo1"
+  - sourceUrl: https://dev.azure.com/organization/project/_git/repository2
+    destinationUrl: https://github.com/organization/repository2.git
+    commitMessage: "Migration from ADO to GitHub - Repository 2"
+  - sourceUrl: https://dev.azure.com/organization/project/_git/repository3
+    destinationUrl: https://github.com/organization/repository3.git
+    commitMessage: "Migrated legacy codebase to GitHub"

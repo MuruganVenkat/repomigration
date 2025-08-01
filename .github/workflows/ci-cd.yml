@@ -1,0 +1,101 @@
+name: Repository Migration CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'RepositoryMigration/**'
+      - 'RepositoryMigration.Tests/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'RepositoryMigration/**'
+      - 'RepositoryMigration.Tests/**'
+  workflow_dispatch:
+    inputs:
+      run_migration:
+        description: 'Run actual migration after build'
+        required: false
+        default: false
+        type: boolean
+      config_file:
+        description: 'Configuration file to use for migration'
+        required: false
+        default: 'configs/migration-config.yaml'
+        type: string
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT_PATH: './RepositoryMigration'
+  TEST_PROJECT_PATH: './RepositoryMigration.Tests'
+  SOLUTION_PATH: './RepositoryMigration.sln'
+
+jobs:
+  # Job 1: Build and Test
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for better Git operations
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+    
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
+    
+    - name: Build solution
+      run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+    
+    - name: Run unit tests
+      run: |
+        dotnet test ${{ env.TEST_PROJECT_PATH }} \
+          --configuration Release \
+          --no-build \
+          --verbosity normal \
+          --logger trx \
+          --results-directory TestResults/ \
+          --collect:"XPlat Code Coverage"
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: TestResults/
+    
+    - name: Upload code coverage
+      uses: codecov/codecov-action@v4
+      if: always()
+      with:
+        directory: TestResults/
+        flags: unittests
+        name: codecov-umbrella
+    
+    - name: Publish application
+      run: |
+        dotnet publish ${{ env.PROJECT_PATH }} \
+          --configuration Release \
+          --output ./publish \
+          --no-build
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: published-app
+        path: ./publish/

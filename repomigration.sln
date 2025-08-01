@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "repomigration", "repomigration\repomigration.csproj", "{ED8343B4-BB3C-4755-8773-B8614638590F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "repomigration.tests", "repomigration.tests\repomigration.tests.csproj", "{BB73CBA8-82C0-40F6-97AF-C19375117F5F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ED8343B4-BB3C-4755-8773-B8614638590F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED8343B4-BB3C-4755-8773-B8614638590F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED8343B4-BB3C-4755-8773-B8614638590F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED8343B4-BB3C-4755-8773-B8614638590F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB73CBA8-82C0-40F6-97AF-C19375117F5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB73CBA8-82C0-40F6-97AF-C19375117F5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB73CBA8-82C0-40F6-97AF-C19375117F5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB73CBA8-82C0-40F6-97AF-C19375117F5F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

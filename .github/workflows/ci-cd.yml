@@ -28,7 +28,7 @@ on:
 env:
   DOTNET_VERSION: '8.0.x'
   PROJECT_PATH: './repomigration'
-  TEST_PROJECT_PATH: './repomigration.Tests'
+  TEST_PROJECT_PATH: './repomigration.tests'
   SOLUTION_PATH: './repomigration.sln'
 
 jobs:

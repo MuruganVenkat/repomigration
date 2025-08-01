@@ -89,8 +89,8 @@ namespace RepositoryMigration
                 {
                     services.AddLogging(builder => builder.AddConsole());
                     services.AddScoped<IGitCommandExecutor, GitCommandExecutor>();
-                    services.AddScoped<IYamlConfigReader, YamlConfigReader>();
                     services.AddScoped<IRepositoryMigrator, RepositoryMigrator>();
+                    services.AddScoped<IYamlConfigReader, YamlConfigReader>();
                 });
     }
 }

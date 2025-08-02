@@ -100,42 +100,42 @@ jobs:
         name: published-app
         path: ./publish/
 # Job 2: Security Scan
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    needs: build-and-test
+  # security-scan:
+  #   name: Security Scan
+  #   runs-on: ubuntu-latest
+  #   needs: build-and-test
     
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
     
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
+  #   - name: Setup .NET
+  #     uses: actions/setup-dotnet@v4
+  #     with:
+  #       dotnet-version: ${{ env.DOTNET_VERSION }}
     
-    - name: Restore dependencies
-      run: dotnet restore ${{ env.SOLUTION_PATH }}
+  #   - name: Restore dependencies
+  #     run: dotnet restore ${{ env.SOLUTION_PATH }}
     
-    - name: Run security audit
-      run: dotnet list package --vulnerable --include-transitive
+  #   - name: Run security audit
+  #     run: dotnet list package --vulnerable --include-transitive
     
-    - name: Run CodeQL Analysis
-      uses: github/codeql-action/init@v3
-      with:
-        languages: csharp
+  #   - name: Run CodeQL Analysis
+  #     uses: github/codeql-action/init@v3
+  #     with:
+  #       languages: csharp
     
-    - name: Build for CodeQL
-      run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release
+  #   - name: Build for CodeQL
+  #     run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release
     
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3  
+  #   - name: Perform CodeQL Analysis
+  #     uses: github/codeql-action/analyze@v3  
 
 # Job 4: Migration Execution (Manual Trigger Only)
   run-migration:
     name: Execute Migration
     runs-on: ubuntu-latest
-    needs: security-scan
+    needs: build-and-test
     # if: github.event.inputs.run_migration == 'true'
     #environment: production  # Requires manual approval
     

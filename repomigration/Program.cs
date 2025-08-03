@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
+using System.IO;
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -12,6 +14,15 @@ namespace RepositoryMigration
     {
         static async Task Main(string[] args)
         {
+            // Display version information
+            DisplayVersionInfo();
+
+            // Handle version argument
+            if (args.Length > 0 && (args[0] == "--version" || args[0] == "-v"))
+            {
+                return;
+            }
+
             var configPath = GetConfigPath(args);
             if (string.IsNullOrEmpty(configPath))
             {
@@ -41,6 +52,23 @@ namespace RepositoryMigration
             }
         }
 
+        private static void DisplayVersionInfo()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+                         ?? assembly.GetName().Version?.ToString()
+                         ?? "Unknown";
+            
+            var product = assembly.GetCustomAttribute<AssemblyProductAttribute>()?.Product ?? "Repository Migration Tool";
+            var copyright = assembly.GetCustomAttribute<AssemblyCopyrightAttribute>()?.Copyright ?? "";
+            
+            Console.WriteLine($"{product} v{version}");
+            if (!string.IsNullOrEmpty(copyright))
+            {
+                Console.WriteLine(copyright);
+            }
+            Console.WriteLine();
+        }
         private static string GetConfigPath(string[] args)
         {
             if (args.Length > 0)

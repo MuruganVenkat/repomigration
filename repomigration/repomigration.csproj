@@ -5,6 +5,24 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!-- Version Properties -->
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <InformationalVersion>1.0.0</InformationalVersion>
+    
+    <!-- Application Metadata -->
+    <Product>Repository Migration Tool</Product>
+    <Description>Tool for migrating repositories from Azure DevOps to GitHub</Description>
+    <Copyright>Copyright © 2024</Copyright>
+    <Company>Your Organization</Company>
+    <Authors>Your Team</Authors>
+    
+    <!-- Build Configuration -->
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Deterministic>true</Deterministic>
+    <AssemblyTitle>Repository Migration Tool</AssemblyTitle>
   </PropertyGroup>
 
 <ItemGroup>

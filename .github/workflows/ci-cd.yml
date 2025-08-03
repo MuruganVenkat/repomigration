@@ -24,6 +24,10 @@ on:
         required: false
         default: 'configs/migration-config.yaml'
         type: string
+      version_override:
+        description: 'Override version (e.g., 1.2.3)'
+        required: false
+        type: string
 
 env:
   DOTNET_VERSION: '8.0.x'
@@ -32,10 +36,70 @@ env:
   SOLUTION_PATH: './repomigration.sln'
 
 jobs:
+  # Job 0: Calculate Version
+  calculate-version:
+    name: Calculate Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      semver: ${{ steps.version.outputs.semver }}
+      assembly-version: ${{ steps.version.outputs.assembly-version }}
+      file-version: ${{ steps.version.outputs.file-version }}
+      informational-version: ${{ steps.version.outputs.informational-version }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for GitVersion
+    
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v0.10.2
+      with:
+        versionSpec: '5.x'
+    
+    - name: Calculate Version with GitVersion
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v0.10.2
+      with:
+        useConfigFile: true
+        configFilePath: 'GitVersion.yml'
+    
+    - name: Set Version Output
+      id: version
+      run: |
+        # Use manual version override if provided
+        if [ -n "${{ github.event.inputs.version_override }}" ]; then
+          VERSION="${{ github.event.inputs.version_override }}"
+          echo "Using manual version override: $VERSION"
+        # Use tag version if this is a tag push
+        elif [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "Using tag version: $VERSION"
+        # Use GitVersion for other cases
+        else
+          VERSION="${{ steps.gitversion.outputs.semVer }}"
+          echo "Using GitVersion: $VERSION"
+        fi
+        
+        # Set all version outputs
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "semver=$VERSION" >> $GITHUB_OUTPUT
+        echo "assembly-version=${{ steps.gitversion.outputs.assemblySemVer }}" >> $GITHUB_OUTPUT
+        echo "file-version=${{ steps.gitversion.outputs.assemblySemFileVer }}" >> $GITHUB_OUTPUT
+        echo "informational-version=$VERSION+${{ steps.gitversion.outputs.sha }}" >> $GITHUB_OUTPUT
+        
+        echo "Calculated versions:"
+        echo "  Version: $VERSION"
+        echo "  Assembly Version: ${{ steps.gitversion.outputs.assemblySemVer }}"
+        echo "  File Version: ${{ steps.gitversion.outputs.assemblySemFileVer }}"
+        echo "  Informational Version: $VERSION+${{ steps.gitversion.outputs.sha }}"
+
   # Job 1: Build and Test
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
+    needs: calculate-version
     
     steps:
     - name: Checkout code
@@ -59,9 +123,16 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore ${{ env.SOLUTION_PATH }}
     
-    - name: Build solution
-      run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
-    
+    - name: Build solution with version
+      run: |
+        dotnet build ${{ env.SOLUTION_FILE }} \
+          --configuration Release \
+          --no-restore \
+          -p:Version=${{ needs.calculate-version.outputs.version }} \
+          -p:AssemblyVersion=${{ needs.calculate-version.outputs.assembly-version }} \
+          -p:FileVersion=${{ needs.calculate-version.outputs.file-version }} \
+          -p:InformationalVersion="${{ needs.calculate-version.outputs.informational-version }}"
+
     - name: Run unit tests
       run: |
         dotnet test ${{ env.TEST_PROJECT_PATH }} \
@@ -87,13 +158,34 @@ jobs:
         flags: unittests
         name: codecov-umbrella
     
-    - name: Publish application
+    - name: Publish application with version
       run: |
         dotnet publish ${{ env.PROJECT_PATH }} \
           --configuration Release \
           --output ./publish \
-          --no-build
-    
+          --no-build \
+          -p:Version=${{ needs.calculate-version.outputs.version }} \
+          -p:AssemblyVersion=${{ needs.calculate-version.outputs.assembly-version }} \
+          -p:FileVersion=${{ needs.calculate-version.outputs.file-version }} \
+          -p:InformationalVersion="${{ needs.calculate-version.outputs.informational-version }}"
+    - name: Create version info file
+      run: |
+        cat > ./publish/version.json << EOF
+        {
+          "version": "${{ needs.calculate-version.outputs.version }}",
+          "semver": "${{ needs.calculate-version.outputs.semver }}",
+          "assemblyVersion": "${{ needs.calculate-version.outputs.assembly-version }}",
+          "fileVersion": "${{ needs.calculate-version.outputs.file-version }}",
+          "informationalVersion": "${{ needs.calculate-version.outputs.informational-version }}",
+          "buildDate": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+          "commit": "${{ github.sha }}",
+          "branch": "${{ github.ref_name }}"
+        }
+        EOF
+        
+        echo "Version info created:"
+        cat ./publish/version.json
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -135,7 +227,7 @@ jobs:
   run-migration:
     name: Execute Migration
     runs-on: ubuntu-latest
-    needs: build-and-test
+    needs: [calculate-version, build-and-test]
     # if: github.event.inputs.run_migration == 'true'
     #environment: production  # Requires manual approval
     
@@ -157,11 +249,17 @@ jobs:
     - name: Download build artifacts
       uses: actions/download-artifact@v4
       with:
-        name: published-app
+        name: published-app-${{ needs.calculate-version.outputs.version }}
         path: ./publish
     
     - name: Make executable
       run: chmod +x ./publish/repomigration
+    - name: Display version information
+      run: |
+        echo "Running Repository Migration Tool"
+        echo "Version: ${{ needs.calculate-version.outputs.version }}"
+        echo "Build Info:"
+        cat ./publish/version.json
     
     - name: Validate configuration file
       run: |
@@ -184,7 +282,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: migration-logs
+        name: migration-logs-${{ needs.calculate-version.outputs.version }}
         path: |
           *.log
           migration-*.log

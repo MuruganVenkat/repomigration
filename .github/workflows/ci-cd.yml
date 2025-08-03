@@ -189,7 +189,7 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: published-app
+        name: published-app-${{ needs.calculate-version.outputs.version }}
         path: ./publish/
 # Job 2: Security Scan
   # security-scan:

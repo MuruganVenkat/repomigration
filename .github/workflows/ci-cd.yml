@@ -34,6 +34,7 @@ env:
   PROJECT_PATH: './repomigration'
   TEST_PROJECT_PATH: './repomigration.tests'
   SOLUTION_PATH: './repomigration.sln'
+  CONFIG_PATH: './configs'
 
 jobs:
   # Job 0: Calculate Version
@@ -168,6 +169,20 @@ jobs:
           -p:AssemblyVersion=${{ needs.calculate-version.outputs.assembly-version }} \
           -p:FileVersion=${{ needs.calculate-version.outputs.file-version }} \
           -p:InformationalVersion="${{ needs.calculate-version.outputs.informational-version }}"
+
+    - name: Copy configs folder to publish directory
+      run: |
+        if [ -d "${{ env.CONFIG_PATH }}" ]; then
+          echo "Copying configs folder to publish directory..."
+          cp -r ${{ env.CONFIG_PATH }} ./publish/
+          echo "Contents of publish directory:"
+          ls -la ./publish/
+          echo "Contents of configs in publish directory:"
+          ls -la ./publish/configs/
+        else
+          echo "Warning: configs folder not found at ${{ env.CONFIG_PATH }}"
+          exit 1
+        fi
     - name: Create version info file
       run: |
         cat > ./publish/version.json << EOF
@@ -252,6 +267,27 @@ jobs:
         name: published-app-${{ needs.calculate-version.outputs.version }}
         path: ./publish
     
+    - name: Verify downloaded artifacts and configs
+      run: |
+        echo "=== Downloaded Artifacts ==="
+        ls -la ./published-app-${{ needs.calculate-version.outputs.version }}/
+        echo ""
+        echo "=== Config Directory Structure ==="
+        if [ -d "./published-app-${{ needs.calculate-version.outputs.version }}/configs" ]; then
+          find ./published-app-${{ needs.calculate-version.outputs.version }}/configs -type f
+          echo ""
+          echo "=== Config Files Content Preview ==="
+          for config_file in ./published-app-${{ needs.calculate-version.outputs.version }}/configs/*.yaml; do
+            if [ -f "$config_file" ]; then
+              echo "--- $(basename $config_file) ---"
+              head -10 "$config_file" 2>/dev/null || echo "Cannot read $config_file"
+              echo ""
+            fi
+          done
+        else
+          echo "ERROR: configs directory not found in downloaded artifacts!"
+          exit 1
+        fi
     - name: Make executable
       run: chmod +x ./publish/repomigration
     - name: Display version information
@@ -261,23 +297,42 @@ jobs:
         echo "Build Info:"
         cat ./publish/version.json
     
-    - name: Validate configuration file
+    # - name: Validate configuration file
+    #   run: |
+    #     if [ ! -f "${{ github.event.inputs.config_file }}" ]; then
+    #       echo "Error: Configuration file not found: ${{ github.event.inputs.config_file }}"
+    #       exit 1
+    #     fi
+    #     echo "Using configuration file: ${{ github.event.inputs.config_file }}"
+    
+    - name: Validate configuration
       run: |
-        if [ ! -f "${{ github.event.inputs.config_file }}" ]; then
-          echo "Error: Configuration file not found: ${{ github.event.inputs.config_file }}"
+        echo "=== Validating Migration Configuration ==="
+        
+        # Set config path for the application to use
+        export CONFIG_DIRECTORY="./published-app-${{ needs.calculate-version.outputs.version }}/configs"
+        
+        # Check if main config file exists
+        MAIN_CONFIG="$CONFIG_DIRECTORY/migration-config.yaml"
+        if [ ! -f "$MAIN_CONFIG" ]; then
+          echo "ERROR: Main configuration file not found at $MAIN_CONFIG"
+          echo "Available config files:"
+          ls -la $CONFIG_DIRECTORY/ 2>/dev/null || echo "No config directory found"
           exit 1
         fi
-        echo "Using configuration file: ${{ github.event.inputs.config_file }}"
-    
+        
+        echo "✓ Configuration validation passed"
+        echo "Using config directory: $CONFIG_DIRECTORY"
+  
     - name: Run migration (dry-run first)
       run: |
-        echo "This would execute: ./publish/repomigration ${{ github.event.inputs.config_file }}"
+        echo "This would execute: ./published-app-${{ needs.calculate-version.outputs.version }}/repomigration ${{ github.event.inputs.config_file }}"
         echo "Configuration file content:"
         cat "${{ github.event.inputs.config_file }}"
         # Note: Actual migration execution is commented out for safety
         # Uncomment the next line to run actual migration
         # ./publish/repomigration "${{ github.event.inputs.config_file }}"
-    
+  
     - name: Upload migration logs
       uses: actions/upload-artifact@v4
       if: always()

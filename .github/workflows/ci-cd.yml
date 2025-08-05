@@ -305,6 +305,17 @@ jobs:
     #     fi
     #     echo "Using configuration file: ${{ github.event.inputs.config_file }}"
     
+    - name: Locate configs folder
+      run: |
+        echo "Locating configs folder in downloaded artifacts..."
+        CONFIG_DIRECTORY=$(find $GITHUB_WORKSPACE -type d -name "configs" | head -n 1)
+        if [ -z "$CONFIG_DIRECTORY" ]; then
+          echo "ERROR: Configs folder not found in artifacts."
+          exit 1
+        fi
+        echo "Configs folder found at: $CONFIG_DIRECTORY"
+        echo "CONFIG_DIRECTORY=$CONFIG_DIRECTORY" >> $GITHUB_ENV
+
     - name: Validate configuration
       run: |
         echo "=== Validating Migration Configuration ==="

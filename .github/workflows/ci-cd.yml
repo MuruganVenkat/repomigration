@@ -337,9 +337,9 @@ jobs:
   
     - name: Run migration (dry-run first)
       run: |
-        echo "This would execute: ./published-app-${{ needs.calculate-version.outputs.version }}/repomigration ${{ github.event.inputs.config_file }}"
+        echo "This would execute: $CONFIG_DIRECTORY/migration-config.yaml"
         echo "Configuration file content:"
-        cat "${{ github.event.inputs.config_file }}"
+        cat "$CONFIG_DIRECTORY/migration-config.yaml"
         # Note: Actual migration execution is commented out for safety
         # Uncomment the next line to run actual migration
         # ./publish/repomigration "${{ github.event.inputs.config_file }}"

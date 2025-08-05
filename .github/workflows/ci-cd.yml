@@ -321,7 +321,7 @@ jobs:
         echo "=== Validating Migration Configuration ==="
         
         # Set config path for the application to use
-        export CONFIG_DIRECTORY="./repomigration/publish/configs"
+        #export CONFIG_DIRECTORY="./repomigration/publish/configs"
         
         # Check if main config file exists
         MAIN_CONFIG="$CONFIG_DIRECTORY/migration-config.yaml"

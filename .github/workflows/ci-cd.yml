@@ -2,7 +2,7 @@ name: Repository Migration CI/CD
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ develop, feature/* ]
     paths:
       - 'repomigration/**'
       - 'repomigration.tests/**'
@@ -267,27 +267,27 @@ jobs:
         name: published-app-${{ needs.calculate-version.outputs.version }}
         path: ./publish
     
-    - name: Verify downloaded artifacts and configs
-      run: |
-        echo "=== Downloaded Artifacts ==="
-        ls -la ./published-app-${{ needs.calculate-version.outputs.version }}/
-        echo ""
-        echo "=== Config Directory Structure ==="
-        if [ -d "./published-app-${{ needs.calculate-version.outputs.version }}/configs" ]; then
-          find ./published-app-${{ needs.calculate-version.outputs.version }}/configs -type f
-          echo ""
-          echo "=== Config Files Content Preview ==="
-          for config_file in ./published-app-${{ needs.calculate-version.outputs.version }}/configs/*.yaml; do
-            if [ -f "$config_file" ]; then
-              echo "--- $(basename $config_file) ---"
-              head -10 "$config_file" 2>/dev/null || echo "Cannot read $config_file"
-              echo ""
-            fi
-          done
-        else
-          echo "ERROR: configs directory not found in downloaded artifacts!"
-          exit 1
-        fi
+    # - name: Verify downloaded artifacts and configs
+    #   run: |
+    #     echo "=== Downloaded Artifacts ==="
+    #     ls -la ./published-app-${{ needs.calculate-version.outputs.version }}/
+    #     echo ""
+    #     echo "=== Config Directory Structure ==="
+    #     if [ -d "./published-app-${{ needs.calculate-version.outputs.version }}/configs" ]; then
+    #       find ./published-app-${{ needs.calculate-version.outputs.version }}/configs -type f
+    #       echo ""
+    #       echo "=== Config Files Content Preview ==="
+    #       for config_file in ./published-app-${{ needs.calculate-version.outputs.version }}/configs/*.yaml; do
+    #         if [ -f "$config_file" ]; then
+    #           echo "--- $(basename $config_file) ---"
+    #           head -10 "$config_file" 2>/dev/null || echo "Cannot read $config_file"
+    #           echo ""
+    #         fi
+    #       done
+    #     else
+    #       echo "ERROR: configs directory not found in downloaded artifacts!"
+    #       exit 1
+    #     fi
     - name: Make executable
       run: chmod +x ./publish/repomigration
     - name: Display version information

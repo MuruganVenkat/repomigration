@@ -191,9 +191,9 @@ jobs:
     
     - name: Run migration (dry-run first)
       run: |
-        echo "This would execute: $CONFIG_DIRECTORY/migration-repo.yaml"
+        echo "This would execute: ./RepoMigrationTool/publish/configs/migration-repo.yaml"
         echo "Configuration file content:"
-        cat "$CONFIG_DIRECTORY/migration-repo.yaml"
+        cat "./RepoMigrationTool/publish/configs/migration-repo.yaml"
 
     - name: Perform dry run validation
       env:

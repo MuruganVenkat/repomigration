@@ -1,30 +1,36 @@
 name: Repository Migration Pipeline
 
 on:
-  workflow_dispatch:
-    inputs:
-      config_file:
-        description: 'Migration configuration file path'
-        required: true
-        default: 'migration-repo.yaml'
-        type: string
-      dry_run:
-        description: 'Perform dry run (validation only)'
-        required: false
-        default: false
-        type: boolean
-  push:
-    branches: [  develop, feature/* ]
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - '.github/workflows/**'
-  pull_request:
-    branches: [ main ]
-
+    push:
+      branches: [ develop, feature/* ]
+      paths:
+        - 'RepoMigrationTool/**'
+        - 'RepoMigrationTool.Tests/**'
+        - '.github/workflows/**'
+    pull_request:
+      branches: [ main ]
+      paths:
+        - 'RepoMigrationTool/**'
+        - 'RepoMigrationTool.Tests/**'
+    workflow_dispatch:
+      inputs:
+        run_migration:
+          description: 'Run actual migration after build'
+          required: false
+          default: false
+          type: boolean
+        config_file:
+          description: 'Configuration file to use for migration'
+          required: false
+          default: 'configs/migration-repo.yaml'
+          type: string
 env:
   DOTNET_VERSION: '8.0.x'
   BUILD_CONFIGURATION: 'Release'
+  PROJECT_PATH: './RepoMigrationTool'
+  TEST_PROJECT_PATH: './RepoMigrationTool.Tests'
+  SOLUTION_PATH: './repomigration.sln'
+  CONFIG_PATH: './configs'
 
 jobs:
   build-and-test:
@@ -40,7 +46,7 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
       
     - name: Build solution
       run: dotnet build --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
@@ -55,7 +61,12 @@ jobs:
         flags: unittests
         
     - name: Publish application
-      run: dotnet publish src/RepoMigrationTool/RepoMigrationTool.csproj --configuration ${{ env.BUILD_CONFIGURATION }} --output ./publish --no-build
+      run: |
+        dotnet publish ${{ env.PROJECT_PATH }} \
+            --configuration Release \
+            --output ./publish \
+            --no-build \
+    #run: dotnet publish src/RepoMigrationTool/RepoMigrationTool.csproj --configuration ${{ env.BUILD_CONFIGURATION }} --output ./publish --no-build
       
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
@@ -97,8 +108,8 @@ jobs:
   migrate-repositories:
     runs-on: ubuntu-latest
     needs: [build-and-test, validate-config]
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false'
-    environment: production
+    #if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false'
+    #environment: production
     
     steps:
     - name: Checkout code

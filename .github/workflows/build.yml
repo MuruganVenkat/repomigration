@@ -188,7 +188,13 @@ jobs:
         
     - name: Make executable
       run: chmod +x ./publish/RepoMigrationTool
-      
+    
+    - name: Run migration (dry-run first)
+      run: |
+        echo "This would execute: $CONFIG_DIRECTORY/migration-repo.yaml"
+        echo "Configuration file content:"
+        cat "$CONFIG_DIRECTORY/migration-repo.yaml"
+
     - name: Perform dry run validation
       env:
         ADO_TOKEN: ${{ secrets.ADO_TOKEN }}

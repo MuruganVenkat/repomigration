@@ -71,7 +71,7 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: repo-migration-${{ github.sha }}
+        name: repo-migrationtool-${{ github.sha }}
         path: ./publish/
         retention-days: 30
 
@@ -87,11 +87,11 @@ jobs:
     - name: Download build artifacts
       uses: actions/download-artifact@v4
       with:
-        name: repo-migration-${{ github.sha }}
+        name: repo-migrationtool-${{ github.sha }}
         path: ./publish/
         
     - name: Make executable
-      run: chmod +x ./publish/RepoMigration
+      run: chmod +x ./publish/RepoMigrationTool
       
     - name: Validate migration configuration
       run: |
@@ -118,11 +118,11 @@ jobs:
     - name: Download build artifacts
       uses: actions/download-artifact@v4
       with:
-        name: repo-migration-${{ github.sha }}
+        name: repo-migrationtool-${{ github.sha }}
         path: ./publish/
         
     - name: Make executable
-      run: chmod +x ./publish/RepoMigration
+      run: chmod +x ./publish/RepoMigrationTool
       
     - name: Configure Git
       run: |
@@ -142,7 +142,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.MIGRATION_GITHUB_TOKEN }}
       run: |
         echo "Starting repository migration..."
-        ./publish/RepoMigration "${{ github.event.inputs.config_file }}"
+        ./publish/RepoMigrationTool "${{ github.event.inputs.config_file }}"
         
     - name: Upload migration logs
       if: always()
@@ -157,7 +157,7 @@ jobs:
   dry-run:
     runs-on: ubuntu-latest
     needs: [build-and-test, validate-config]
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true'
+    #if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true'
     
     steps:
     - name: Checkout code
@@ -166,11 +166,11 @@ jobs:
     - name: Download build artifacts
       uses: actions/download-artifact@v4
       with:
-        name: repo-migration-${{ github.sha }}
+        name: repo-migrationtool-${{ github.sha }}
         path: ./publish/
         
     - name: Make executable
-      run: chmod +x ./publish/RepoMigration
+      run: chmod +x ./publish/RepoMigrationTool
       
     - name: Perform dry run validation
       env:

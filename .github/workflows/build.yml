@@ -109,7 +109,7 @@ jobs:
         echo "=== Validating Migration Configuration ==="
         
         # Set config path for the application to use
-        #export CONFIG_DIRECTORY="./repomigration/publish/configs"
+        #export CONFIG_DIRECTORY="./RepoMigrationTool/publish/configs"
         MAIN_CONFIG="$CONFIG_DIRECTORY/migration-repo.yaml"
         if [ ! -f "$MAIN_CONFIG" ]; then
           echo "ERROR: Main configuration file not found at $MAIN_CONFIG"

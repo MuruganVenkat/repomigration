@@ -93,23 +93,40 @@ jobs:
     - name: Make executable
       run: chmod +x ./publish/RepoMigrationTool
       
-    - name: Validate migration configuration
+    - name: Locate configs folder
       run: |
-        echo "Validating configuration file: ${{ github.event.inputs.config_file }}"
-        if [ ! -f "${{ github.event.inputs.config_file }}" ]; then
-          echo "Configuration file not found: ${{ github.event.inputs.config_file }}"
+        echo "Locating configs folder in downloaded artifacts..."
+        CONFIG_DIRECTORY=$(find $GITHUB_WORKSPACE -type d -name "configs" | head -n 1)
+        if [ -z "$CONFIG_DIRECTORY" ]; then
+          echo "ERROR: Configs folder not found in artifacts."
+          exit 1
+        fi
+        echo "Configs folder found at: $CONFIG_DIRECTORY"
+        echo "CONFIG_DIRECTORY=$CONFIG_DIRECTORY" >> $GITHUB_ENV
+
+    - name: Validate configuration
+      run: |
+        echo "=== Validating Migration Configuration ==="
+        
+        # Set config path for the application to use
+        #export CONFIG_DIRECTORY="./repomigration/publish/configs"
+        MAIN_CONFIG="$CONFIG_DIRECTORY/migration-repo.yaml"
+        if [ ! -f "$MAIN_CONFIG" ]; then
+          echo "ERROR: Main configuration file not found at $MAIN_CONFIG"
+          echo "Available config files:"
+          ls -la $CONFIG_DIRECTORY/ 2>/dev/null || echo "No config directory found"
           exit 1
         fi
         
-        # Basic YAML validation
-        python3 -c "import yaml; yaml.safe_load(open('${{ github.event.inputs.config_file }}'))"
+        echo "✓ Configuration validation passed"
+        echo "Using config directory: $CONFIG_DIRECTORY"
         echo "Configuration file is valid YAML"
 
   migrate-repositories:
     runs-on: ubuntu-latest
     needs: [build-and-test, validate-config]
-    #if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false'
-    #environment: production
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false'
+    environment: production
     
     steps:
     - name: Checkout code

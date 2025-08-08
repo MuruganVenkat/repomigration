@@ -1,0 +1,25 @@
+
+repositories:
+  - name: "project-alpha"
+    sourceUrl: "https://dev.azure.com/yourorg/yourproject/_git/project-alpha"
+    destinationUrl: "https://github.com/yourorg/project-alpha.git"
+    commitMessage: "Migrate from Azure DevOps to GitHub"
+    defaultBranch: "main"
+    migrateTags: true
+    migrateAllBranches: true
+
+  - name: "project-beta"
+    sourceUrl: "https://yourorg.visualstudio.com/DefaultCollection/_git/project-beta"
+    destinationUrl: "https://github.com/yourorg/project-beta.git"
+    commitMessage: "Repository migration from ADO to GitHub"
+    defaultBranch: "master"
+    migrateTags: true
+    migrateAllBranches: false
+
+  - name: "legacy-service"
+    sourceUrl: "https://dev.azure.com/yourorg/legacy/_git/legacy-service"
+    destinationUrl: "https://github.com/yourorg/legacy-service.git"
+    commitMessage: "Historical migration from Azure DevOps"
+    defaultBranch: "develop"
+    migrateTags: false
+    migrateAllBranches: true

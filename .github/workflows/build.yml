@@ -1,0 +1,225 @@
+name: Repository Migration Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      config_file:
+        description: 'Migration configuration file path'
+        required: true
+        default: 'migration-repo.yaml'
+        type: string
+      dry_run:
+        description: 'Perform dry run (validation only)'
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches: [  develop, feature/* ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ main ]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  BUILD_CONFIGURATION: 'Release'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build solution
+      run: dotnet build --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
+      
+    - name: Run unit tests
+      run: dotnet test --configuration ${{ env.BUILD_CONFIGURATION }} --no-build --verbosity normal --collect:"XPlat Code Coverage"
+      
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: '**/coverage.cobertura.xml'
+        flags: unittests
+        
+    - name: Publish application
+      run: dotnet publish src/RepoMigrationTool/RepoMigrationTool.csproj --configuration ${{ env.BUILD_CONFIGURATION }} --output ./publish --no-build
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: repo-migration-${{ github.sha }}
+        path: ./publish/
+        retention-days: 30
+
+  validate-config:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: repo-migration-${{ github.sha }}
+        path: ./publish/
+        
+    - name: Make executable
+      run: chmod +x ./publish/RepoMigration
+      
+    - name: Validate migration configuration
+      run: |
+        echo "Validating configuration file: ${{ github.event.inputs.config_file }}"
+        if [ ! -f "${{ github.event.inputs.config_file }}" ]; then
+          echo "Configuration file not found: ${{ github.event.inputs.config_file }}"
+          exit 1
+        fi
+        
+        # Basic YAML validation
+        python3 -c "import yaml; yaml.safe_load(open('${{ github.event.inputs.config_file }}'))"
+        echo "Configuration file is valid YAML"
+
+  migrate-repositories:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, validate-config]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: repo-migration-${{ github.sha }}
+        path: ./publish/
+        
+    - name: Make executable
+      run: chmod +x ./publish/RepoMigration
+      
+    - name: Configure Git
+      run: |
+        git config --global user.name "GitHub Actions Migration Bot"
+        git config --global user.email "actions@github.com"
+        git config --global init.defaultBranch main
+        
+    - name: Install Git LFS
+      run: |
+        curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+        sudo apt-get install git-lfs
+        git lfs install --system
+        
+    - name: Run repository migration
+      env:
+        ADO_TOKEN: ${{ secrets.ADO_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.MIGRATION_GITHUB_TOKEN }}
+      run: |
+        echo "Starting repository migration..."
+        ./publish/RepoMigration "${{ github.event.inputs.config_file }}"
+        
+    - name: Upload migration logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: migration-logs-${{ github.run_number }}
+        path: |
+          *.log
+          /tmp/repo_migration_*.log
+        retention-days: 90
+
+  dry-run:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, validate-config]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: repo-migration-${{ github.sha }}
+        path: ./publish/
+        
+    - name: Make executable
+      run: chmod +x ./publish/RepoMigration
+      
+    - name: Perform dry run validation
+      env:
+        ADO_TOKEN: ${{ secrets.ADO_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.MIGRATION_GITHUB_TOKEN }}
+      run: |
+        echo "Performing dry run validation..."
+        echo "Configuration file: ${{ github.event.inputs.config_file }}"
+        
+        # Validate that tokens are available
+        if [ -z "$ADO_TOKEN" ]; then
+          echo "❌ ADO_TOKEN is not set"
+          exit 1
+        fi
+        echo "✅ ADO_TOKEN is available"
+        
+        if [ -z "$GITHUB_TOKEN" ]; then
+          echo "❌ GITHUB_TOKEN is not set"
+          exit 1
+        fi
+        echo "✅ GITHUB_TOKEN is available"
+        
+        # Parse and validate configuration
+        echo "📋 Configuration validation:"
+        python3 << EOF
+        import yaml
+        import sys
+        
+        try:
+            with open('${{ github.event.inputs.config_file }}', 'r') as f:
+                config = yaml.safe_load(f)
+            
+            if 'repositories' not in config:
+                print("❌ 'repositories' key not found in config")
+                sys.exit(1)
+                
+            repos = config['repositories']
+            print(f"✅ Found {len(repos)} repositories to migrate:")
+            
+            for i, repo in enumerate(repos, 1):
+                name = repo.get('name', f'Repository {i}')
+                source = repo.get('sourceUrl', 'N/A')
+                dest = repo.get('destinationUrl', 'N/A')
+                print(f"  {i}. {name}")
+                print(f"     Source: {source}")
+                print(f"     Destination: {dest}")
+                
+                # Validate required fields
+                required_fields = ['name', 'sourceUrl', 'destinationUrl', 'commitMessage']
+                missing_fields = [field for field in required_fields if not repo.get(field)]
+                
+                if missing_fields:
+                    print(f"     ❌ Missing required fields: {', '.join(missing_fields)}")
+                    sys.exit(1)
+                else:
+                    print(f"     ✅ All required fields present")
+                    
+        except Exception as e:
+            print(f"❌ Configuration validation failed: {e}")
+            sys.exit(1)
+        
+        print("✅ Dry run validation completed successfully")
+        EOF

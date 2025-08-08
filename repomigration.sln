@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "repomigration", "repomigrat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "repomigration.tests", "repomigration.tests\repomigration.tests.csproj", "{BB73CBA8-82C0-40F6-97AF-C19375117F5F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RepoMigrationTool", "RepoMigrationTool\RepoMigrationTool.csproj", "{618074A8-963F-4302-A1E3-F053BF0354EC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RepoMigrationTool.Tests", "RepoMigrationTool.Tests\RepoMigrationTool.Tests.csproj", "{54220C92-76D9-4280-AECE-ED4812AB2729}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +28,13 @@ Global
 		{BB73CBA8-82C0-40F6-97AF-C19375117F5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BB73CBA8-82C0-40F6-97AF-C19375117F5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BB73CBA8-82C0-40F6-97AF-C19375117F5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{618074A8-963F-4302-A1E3-F053BF0354EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{618074A8-963F-4302-A1E3-F053BF0354EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{618074A8-963F-4302-A1E3-F053BF0354EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{618074A8-963F-4302-A1E3-F053BF0354EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54220C92-76D9-4280-AECE-ED4812AB2729}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54220C92-76D9-4280-AECE-ED4812AB2729}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54220C92-76D9-4280-AECE-ED4812AB2729}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54220C92-76D9-4280-AECE-ED4812AB2729}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
